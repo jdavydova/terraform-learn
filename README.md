@@ -271,3 +271,76 @@ Terraform allows you to:
 ## 📚 Useful Links
 
 https://registry.terraform.io/providers/hashicorp/aws/latest
+
+## Main Route Table
+
+This configuration updates the default route table of the VPC to allow
+internet access.
+
+``` hcl
+resource "aws_default_route_table" "main" {
+  default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.myapp-igw.id
+  }
+
+  tags = {
+    Name = "${var.env_prefix}-main-rtb"
+  }
+}
+```
+
+### Explanation
+
+-   Uses the **default route table** created with the VPC.
+-   Adds a route to the **Internet Gateway**.
+-   Allows all outbound traffic to the internet.
+
+------------------------------------------------------------------------
+
+## Security Group
+
+Defines firewall rules for your application.
+
+``` hcl
+resource "aws_security_group" "myapp-sg" {
+  name   = "myapp-sg"
+  vpc_id = aws_vpc.myapp-vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    prefix_list_ids  = []
+  }
+
+  tags = {
+    Name = "${var.env_prefix}-sg"
+  }
+}
+```
+
+### Explanation
+
+-   **Port 22 (SSH)**: Access allowed only from your IP (`var.my_ip`)
+-   **Port 8080**: Open to the public (for your application)
+-   **Egress**: Allows all outbound traffic to anywhere
+
+------------------------------------------------------------------------
