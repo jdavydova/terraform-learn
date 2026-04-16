@@ -442,5 +442,6 @@ user_data_replace_on_change = true
 
 <img width="1132" height="525" alt="Screenshot 2026-04-16 at 9 43 25 AM" src="https://github.com/user-attachments/assets/32fc0b1c-9e32-43dd-98e2-23e1822f1def" />
 
+  git checkout -b feature/deploy-to-ec2-default-component
 
 
