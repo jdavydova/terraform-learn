@@ -444,4 +444,168 @@ user_data_replace_on_change = true
 
   git checkout -b feature/deploy-to-ec2-default-component
 
+# Terraform: user_data, Provisioners, and Modules
+
+## Using External Scripts with user_data
+
+Instead of embedding long scripts inside Terraform, you can reference a
+file:
+
+``` hcl
+user_data = file("entry-script.sh")
+user_data_replace_on_change = true
+```
+
+### Why use this?
+
+-   Keeps Terraform code clean
+-   Easier to manage complex scripts
+-   Reusable scripts
+
+------------------------------------------------------------------------
+
+## Provisioners in Terraform
+
+Provisioners execute scripts **after a resource is created**.
+
+### SSH Connection
+
+``` hcl
+connection {
+  type        = "ssh"
+  host        = self.public_ip
+  user        = "ec2-user"
+  private_key = file(var.private_key_location)
+}
+```
+
+------------------------------------------------------------------------
+
+### File Provisioner
+
+Copies files from local machine to EC2:
+
+``` hcl
+provisioner "file" {
+  source      = "entry-script.sh"
+  destination = "/home/ec2-user/entry-script-on-ec2.sh"
+}
+```
+
+------------------------------------------------------------------------
+
+### Remote Exec Provisioner
+
+Runs commands on the remote server:
+
+``` hcl
+provisioner "remote-exec" {
+  inline = [
+    "export ENV=dev",
+    "mkdir newer"
+  ]
+}
+```
+
+------------------------------------------------------------------------
+
+### Local Exec Provisioner
+
+Runs commands locally (on your machine):
+
+``` hcl
+provisioner "local-exec" {
+  command = "echo ${self.public_ip} > output.txt"
+}
+```
+
+------------------------------------------------------------------------
+
+## Key Differences
+
+  Feature       Description
+  ------------- ------------------------------------
+  user_data     Runs at instance startup (via AWS)
+  remote-exec   Runs via SSH after creation
+  file          Copies files to resource
+  local-exec    Runs locally
+
+------------------------------------------------------------------------
+
+## ⚠️ Why Provisioners Are NOT Recommended
+
+Terraform discourages using provisioners because:
+
+-   Break idempotency
+-   Terraform cannot track what scripts do
+-   No guarantee commands succeed
+-   Breaks desired-state model
+
+### Best Practice:
+
+Use `user_data` whenever possible
+
+------------------------------------------------------------------------
+
+## Modules in Terraform
+
+Modules help organize and reuse infrastructure code.
+
+### Example: EC2 Module (webserver)
+
+Project structure:
+
+    modules/
+      webserver/
+        main.tf
+        variables.tf
+        outputs.tf
+        providers.tf
+
+------------------------------------------------------------------------
+
+### Create Module Directory
+
+``` bash
+mkdir -p modules/webserver
+cd modules/webserver
+touch main.tf variables.tf outputs.tf providers.tf
+```
+
+------------------------------------------------------------------------
+
+## Module Outputs
+
+Outputs allow child modules to expose values:
+
+``` hcl
+output "instance_ip" {
+  value = aws_instance.app_server.public_ip
+}
+```
+
+### Access from Parent Module:
+
+``` hcl
+module.webserver.instance_ip
+```
+
+------------------------------------------------------------------------
+
+## Apply Configuration
+
+``` bash
+terraform init
+terraform apply -auto-approve
+```
+
+------------------------------------------------------------------------
+
+## Summary
+
+-   Use user_data for bootstrapping
+-   Avoid provisioners unless necessary
+-   Use modules for reusable infrastructure
+-   Keep Terraform declarative and predictable
+
 
