@@ -1,3 +1,4 @@
+<img width="511" height="234" alt="Screenshot 2026-04-18 at 5 19 06 PM" src="https://github.com/user-attachments/assets/ab7c76e7-b7da-4ffd-b12c-6611e989e2ab" />
 # 🚀 Infrastructure as Code (IaC) with Terraform (AWS)
 
 This README provides a step-by-step guide to setting up Terraform and provisioning AWS infrastructure.
@@ -609,3 +610,4 @@ terraform apply -auto-approve
 -   Keep Terraform declarative and predictable
 
 
+<img width="511" height="234" alt="Screenshot 2026-04-18 at 5 19 06 PM" src="https://github.com/user-attachments/assets/92f5d315-6a23-4877-8953-3f563c2adc45" />
