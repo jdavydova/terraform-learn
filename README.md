@@ -442,5 +442,405 @@ user_data_replace_on_change = true
 
 <img width="1132" height="525" alt="Screenshot 2026-04-16 at 9 43 25 AM" src="https://github.com/user-attachments/assets/32fc0b1c-9e32-43dd-98e2-23e1822f1def" />
 
+## Using External Scripts with user_data
+
+For longer or more complex scripts, instead of embedding them directly
+in Terraform, you can reference a file:
+
+``` hcl
+user_data = file("entry-script.sh")
+```
+
+### Benefits
+
+-   Cleaner Terraform configuration
+-   Easier to manage scripts
+-   Reusable logic
+
+------------------------------------------------------------------------
+
+## Provisioners in Terraform
+
+Provisioners execute scripts on resources **after they are created**.
+
+### SSH Connection
+
+``` hcl
+connection {
+  type        = "ssh"
+  host        = self.public_ip
+  user        = "ec2-user"
+  private_key = file(var.private_key_location)
+}
+```
+
+------------------------------------------------------------------------
+
+### File Provisioner
+
+Copies files from local machine to the resource:
+
+``` hcl
+provisioner "file" {
+  source      = "entry-script.sh"
+  destination = "/home/ec2-user/entry-script-on-ec2.sh"
+}
+```
+
+------------------------------------------------------------------------
+
+### Remote Exec Provisioner
+
+Executes commands on the remote server:
+
+``` hcl
+provisioner "remote-exec" {
+  inline = [
+    "export ENV=dev",
+    "mkdir newer"
+  ]
+}
+```
+
+------------------------------------------------------------------------
+
+### Local Exec Provisioner
+
+Runs commands locally:
+
+``` hcl
+provisioner "local-exec" {
+  command = "echo ${self.public_ip} > output.txt"
+}
+```
+
+------------------------------------------------------------------------
+
+## Key Differences
+
+  Feature       Description
+  ------------- ----------------------------------
+  user_data     Runs at instance startup via AWS
+  remote-exec   Runs via SSH after creation
+  file          Copies files to remote resource
+  local-exec    Runs locally
+
+------------------------------------------------------------------------
+
+## ⚠️ Why Provisioners Are Not Recommended
+
+Terraform discourages provisioners because:
+
+-   Break idempotency
+-   Terraform cannot track script execution
+-   No guarantee scripts run successfully
+-   Breaks desired state model
+
+### Best Practice
+
+Use `user_data` whenever possible.
+
+------------------------------------------------------------------------
+
+## Modules in Terraform
+
+Modules allow reusable infrastructure components.
+
+### Example: EC2 Module (webserver)
+
+Project structure:
+
+    modules/
+      webserver/
+        main.tf
+        variables.tf
+        outputs.tf
+        providers.tf
+
+------------------------------------------------------------------------
+
+### Create Module
+
+``` bash
+mkdir modules
+cd modules
+mkdir webserver
+cd webserver
+
+touch main.tf variables.tf outputs.tf providers.tf
+```
+
+------------------------------------------------------------------------
+
+## Module Outputs
+
+Outputs expose values from child modules:
+
+``` hcl
+output "instance_ip" {
+  value = aws_instance.app_server.public_ip
+}
+```
+
+### Access from parent module:
+
+``` hcl
+module.webserver.instance_ip
+```
+
+------------------------------------------------------------------------
+
+## Apply Terraform
+
+``` bash
+terraform init
+terraform apply -auto-approve
+```
+
+------------------------------------------------------------------------
+
+<img width="511" height="234" alt="Screenshot 2026-04-18 at 5 19 06 PM" src="https://github.com/user-attachments/assets/28c66879-05fa-49c0-976d-5bf366e8f198" />
+
+# Automate Provisioning EKS Cluster with Terraform
+
+## Overview
+
+This guide explains how to provision an AWS EKS cluster using Terraform
+and the required infrastructure components.
+
+------------------------------------------------------------------------
+
+## EKS Architecture Basics
+
+An EKS cluster consists of:
+
+-   **Control Plane (managed by AWS)**
+    -   Highly available
+    -   Managed by AWS (no need to configure manually)
+-   **Worker Nodes**
+    -   EC2 instances or Fargate
+    -   Must be connected to the control plane
+
+------------------------------------------------------------------------
+
+## Git Workflow
+
+``` bash
+git checkout -b feature/eks
+```
+
+------------------------------------------------------------------------
+
+## VPC Requirements for EKS
+
+EKS requires: - Proper VPC configuration - Public and private subnets -
+Route tables - Internet access (via NAT)
+
+Best practice: - At least **1 public + 1 private subnet per Availability
+Zone**
+
+------------------------------------------------------------------------
+
+## Terraform vs CloudFormation
+
+-   CloudFormation = AWS-specific
+-   Terraform = multi-cloud (used here)
+
+------------------------------------------------------------------------
+
+## VPC Module (vpc.tf)
+
+``` hcl
+module "myapp-vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "6.0.1"
+
+  name = "myapp-vpc"
+  cidr = var.vpc_cidr_block
+
+  private_subnets = var.private_subnet_cidr_blocks
+  public_subnets  = var.public_subnet_cidr_blocks
+}
+```
+
+------------------------------------------------------------------------
+
+## 1. Provider Configuration
+
+``` hcl
+provider "aws" {
+  region = "eu-north-1"
+}
+```
+
+Defines AWS region (Stockholm).
+
+------------------------------------------------------------------------
+
+## 2. Variables
+
+``` hcl
+variable "vpc_cidr_block" {}
+variable "private_subnet_cidr_blocks" {}
+variable "public_subnet_cidr_blocks" {}
+```
+
+Used to pass: - VPC CIDR - Private subnets - Public subnets
+
+Example:
+
+``` hcl
+vpc_cidr_block = "10.0.0.0/16"
+```
+
+------------------------------------------------------------------------
+
+## 3. Availability Zones (Data Source)
+
+``` hcl
+data "aws_availability_zones" "azs" {}
+```
+
+Fetches available AZs dynamically.
+
+Example result:
+
+    ["eu-north-1a", "eu-north-1b", "eu-north-1c"]
+
+------------------------------------------------------------------------
+
+## 4. VPC Module Explained
+
+``` hcl
+module "myapp-vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "6.0.1"
+```
+
+Uses a pre-built module that creates: - VPC - Subnets - Route tables -
+NAT Gateway - Networking components
+
+------------------------------------------------------------------------
+
+## 5. VPC Configuration
+
+``` hcl
+name = "myapp-vpc"
+cidr = var.vpc_cidr_block
+```
+
+Creates VPC with defined CIDR range.
+
+------------------------------------------------------------------------
+
+## 6. Subnets
+
+``` hcl
+private_subnets = var.private_subnet_cidr_blocks
+public_subnets  = var.public_subnet_cidr_blocks
+azs             = data.aws_availability_zones.azs.names
+```
+
+-   Public subnets → internet-facing (load balancers)
+-   Private subnets → internal workloads (apps, DB)
+
+AZ distribution ensures high availability.
+
+------------------------------------------------------------------------
+
+## 7. NAT Gateway
+
+``` hcl
+enable_nat_gateway = true
+single_nat_gateway = true
+```
+
+Allows private instances to access the internet.
+
+-   `true` → enables outbound internet
+-   `single_nat_gateway` → cheaper but less HA
+
+------------------------------------------------------------------------
+
+## 8. DNS Support
+
+``` hcl
+enable_dns_hostnames = true
+```
+
+Enables DNS hostnames for EC2 instances.
+
+------------------------------------------------------------------------
+
+## 9. Kubernetes (EKS) Tags
+
+### Cluster Tag
+
+``` hcl
+tags = {
+  "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+}
+```
+
+Marks VPC for EKS usage.
+
+------------------------------------------------------------------------
+
+### Public Subnet Tags
+
+``` hcl
+public_subnet_tags = {
+  "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+  "kubernetes.io/role/elb" = "1"
+}
+```
+
+Allows: - Internet-facing Load Balancers
+
+------------------------------------------------------------------------
+
+### Private Subnet Tags
+
+``` hcl
+private_subnet_tags = {
+  "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+  "kubernetes.io/role/internal-elb" = "1"
+}
+```
+
+Allows: - Internal Load Balancers
+
+------------------------------------------------------------------------
+
+## Summary
+
+This Terraform setup creates:
+
+-   VPC
+-   Public & Private subnets
+-   Availability zone distribution
+-   NAT Gateway
+-   DNS configuration
+-   Kubernetes-ready infrastructure
+
+------------------------------------------------------------------------
+
+## Next Steps
+
+``` bash
+terraform init
+terraform plan
+terraform apply
+```
+
+------------------------------------------------------------------------
+
+## Key DevOps Concepts
+
+-   Infrastructure as Code (Terraform)
+-   High Availability (multi-AZ)
+-   Kubernetes networking requirements
+-   AWS managed services (EKS)
+
 
 
