@@ -843,4 +843,11 @@ terraform apply
 -   AWS managed services (EKS)
 
 
+<img width="498" height="293" alt="Screenshot 2026-04-22 at 11 05 57 AM" src="https://github.com/user-attachments/assets/c366f542-8058-4c8f-b096-f28e261c3a5d" />
+
+
+
+<img width="989" height="489" alt="Screenshot 2026-04-22 at 11 32 59 AM" src="https://github.com/user-attachments/assets/8582ebed-6c7e-49f8-a49c-eea1684aa022" />
+
+
 
