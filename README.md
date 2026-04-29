@@ -849,6 +849,174 @@ terraform apply
 
 <img width="989" height="489" alt="Screenshot 2026-04-22 at 11 32 59 AM" src="https://github.com/user-attachments/assets/8582ebed-6c7e-49f8-a49c-eea1684aa022" />
 
+# 🚀 Complete CI/CD with Terraform
+
+## 📌 Overview
+
+This guide explains how to build a CI/CD pipeline using **Jenkins + Terraform + AWS** to provision infrastructure and deploy applications.
+
+---
+
+## ⚙️ Prerequisites
+
+- Jenkins installed
+- AWS account
+- Docker & Docker Compose
+- Terraform
+
+📚 Documentation:
+- Terraform: https://developer.hashicorp.com/terraform/downloads
+- Docker Compose: https://docs.docker.com/compose/install/standalone/
+
+---
+
+## 🔧 Setup Steps
+
+### 1️⃣ Create SSH Key Pair
+
+```bash
+cat ~/Downloads/myapp-key-pair.pem
+```
+
+Jenkins Credential:
+- Kind: SSH Username with private key
+- ID: server-ssh-key
+- User: ec2-user
+
+---
+
+### 2️⃣ Install Terraform in Jenkins
+
+Ensure Terraform is installed inside Jenkins container.
+
+---
+
+### 3️⃣ Create Terraform Configuration
+
+```bash
+mkdir terraform
+cd terraform
+touch main.tf
+```
+
+---
+
+### 4️⃣ Configure Remote Backend (S3)
+
+```hcl
+terraform {
+  required_version = ">= 0.12"
+
+  backend "s3" {
+    bucket = "myapp-tf-s3-bucket"
+    key    = "myapp/state.tfstate"
+  }
+}
+```
+
+---
+
+## 🔄 Jenkins Pipeline
+
+### Provision Stage
+
+```groovy
+stage("provision server") {
+    environment {
+        AWS_ACCESS_KEY = credentials('jenkins-aws_access_key_id')
+        AWS_SECRET_ACCESS_KEY = credentials('jenkins-aws_secret_access_key')
+        TF_VAR_env_prefix = 'test'
+    }
+    steps {
+        script {
+            dir('terraform') {
+                sh "terraform init -input=false"
+                sh "terraform apply --auto-approve"
+            }
+        }
+    }
+}
+```
+
+---
+
+### Deploy Stage
+
+```groovy
+stage("deploy") {
+  steps {
+    script {
+      sleep(time: 90, unit: "SECONDS")
+
+      def shellCmd = "bash ./server-cmds.sh ${IMAGE_NAME}"
+      def ec2Instance = "ec2-user@<EC2_PUBLIC_IP>"
+
+      sshagent(['server-ssh-key']) {
+        sh "scp -o StrictHostKeyChecking=no server-cmds.sh ${ec2Instance}:/home/ec2-user"
+        sh "scp -o StrictHostKeyChecking=no docker-compose.yaml ${ec2Instance}:/home/ec2-user"
+        sh "ssh -o StrictHostKeyChecking=no ${ec2Instance} ${shellCmd}"
+      }
+    }
+  }
+}
+```
+
+---
+
+## 🔐 SSH Note
+
+StrictHostKeyChecking=no:
+- Auto-accepts host keys
+- Skips verification (not secure for production)
+
+---
+
+## 🔑 Terraform Variables
+
+```bash
+TF_VAR_env_prefix=test
+```
+
+---
+
+## 🗄️ Terraform Backends
+
+- Local (default)
+- Remote (S3 recommended)
+
+---
+
+## 🧠 Best Practices
+
+- Use Terraform CLI only
+- Use remote state (S3)
+- Enable locking (DynamoDB)
+- Enable versioning (backup)
+- Separate environments
+- Store code in Git
+- Use CI/CD pipeline
+
+---
+
+## 📦 Flow
+
+```
+Jenkins → Terraform → AWS → SSH → Deployment
+```
+
+---
+
+## 📎 Resources
+
+- Terraform Learn: https://gitlab.com/twn-devops-bootcamp/latest/12-terraform/terraform-learn/-/tree/feature/eks
+- Java App: https://gitlab.com/twn-devops-bootcamp/latest/12-terraform/java-maven-app
+
+---
+
+## ✅ Summary
+
+Automates infrastructure provisioning and deployment using Terraform and Jenkins.
+
 
 <img width="398" height="251" alt="Screenshot 2026-04-24 at 10 46 14 AM" src="https://github.com/user-attachments/assets/136b3c70-4f71-4c6d-bb0c-5ed2caffcd05" />
 
