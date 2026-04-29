@@ -1017,6 +1017,9 @@ Jenkins → Terraform → AWS → SSH → Deployment
 
 Automates infrastructure provisioning and deployment using Terraform and Jenkins.
 
+<img width="1421" height="489" alt="Screenshot 2026-04-29 at 11 56 11 AM" src="https://github.com/user-attachments/assets/aba8565c-1e2f-4f19-8171-98089c48f49e" />
+
+<img width="1288" height="780" alt="Screenshot 2026-04-29 at 11 56 41 AM" src="https://github.com/user-attachments/assets/ff356f05-d889-4544-932f-ecbebb8d0088" />
 
 <img width="398" height="251" alt="Screenshot 2026-04-24 at 10 46 14 AM" src="https://github.com/user-attachments/assets/136b3c70-4f71-4c6d-bb0c-5ed2caffcd05" />
 
