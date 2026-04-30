@@ -50,7 +50,7 @@ data "aws_eks_cluster_auth" "cluster" {
 - ebs csi driver: v1.25.0
 
 **Create S3 bucket:**
-- name: "my-bucket-exercise"
+- name: "myapp-tf-bucket-s3"
 - region: eu-north-1
 
 **Set variables:**
