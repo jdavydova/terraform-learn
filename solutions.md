@@ -52,7 +52,7 @@ _ex: `aws eks update-kubeconfig --name my-cluster --region eu-central-1`_
 
 Values of the following environment variables need to be set inside jenkinsfile
 - TF_VAR_env_prefix = "dev"
-- TF_VAR_k8s_version = "1.28"
+- TF_VAR_k8s_version = "1.29"
 - TF_VAR_cluster_name = "my-cluster"
 - TF_VAR_region = "eu-north-1
 
