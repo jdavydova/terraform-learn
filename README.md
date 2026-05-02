@@ -80,7 +80,7 @@ Check what will be destroyed first:
 Force destroy (no confirmation):
 
     terraform destroy -auto-approve -var-file="dev.tfvars"
-
+</details>
 ******
 
 <details>
