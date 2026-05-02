@@ -81,7 +81,7 @@ Force destroy (no confirmation):
 
     terraform destroy -auto-approve -var-file="dev.tfvars"
 
-
+******
 
 <details>
 <summary>Exercise 3: CI/CD pipeline for Terraform project </summary>
