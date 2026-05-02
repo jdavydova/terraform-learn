@@ -72,3 +72,22 @@ Check what will be destroyed first:
 Force destroy (no confirmation):
 
     terraform destroy -auto-approve -var-file="dev.tfvars"
+
+
+
+<details>
+<summary>Exercise 3: CI/CD pipeline for Terraform project </summary>
+ <br />
+
+##### This project includes a Jenkinsfile for CI/CD pipeline
+
+Values of the following environment variables need to be set inside jenkinsfile
+- TF_VAR_env_prefix = "dev"
+- TF_VAR_k8s_version = "1.28"
+- TF_VAR_cluster_name = "my-cluster"
+- TF_VAR_region = "eu-central-1"
+
+Values of the following environment variables need to be configured as Jenkins credentials
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+</details>
