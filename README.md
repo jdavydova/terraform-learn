@@ -1,3 +1,11 @@
+</details>
+
+******
+
+<details>
+<summary>Exercise 1 & 2: Create Terraform project to spin up EKS cluster </summary>
+ <br />
+
 ### This project is for the Devops Bootcamp Exercise for "Infrastructure as Code with Terraform"
 
 #### IMPORTANT - please read the following:
