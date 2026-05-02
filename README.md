@@ -55,7 +55,7 @@ data "aws_eks_cluster_auth" "cluster" {
 
 **Set variables:**
 - env_prefix = "dev"
-- k8s_version = "1.28"
+- k8s_version = "1.29"
 - cluster_name = "my-cluster"
 - region = "eu-north-1"
 
@@ -65,3 +65,10 @@ terraform init
 
 terraform apply -var-file="dev.tfvars"
 ```
+Check what will be destroyed first:
+
+    terraform plan -destroy -var-file="dev.tfvars"
+
+Force destroy (no confirmation):
+
+    terraform destroy -auto-approve -var-file="dev.tfvars"
